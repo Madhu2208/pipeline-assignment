@@ -1,0 +1,38 @@
+pipeline{
+    agent any
+    environment{
+        PATH = " /usr/share/maven/bin:$PATH"
+    }
+    stages{
+        stage('git'){
+            steps{
+                git 'https://github.com/adithya180498/pipeline-assignment.git'
+            }
+        }
+        stage('maven'){
+            steps{
+                sh 'mvn -f maven1234/pom.xml clean install'
+            }
+        }
+        stage('SonarQube analysis') {
+//    def scannerHome = tool 'SonarScanner 4.0';
+        steps{
+        withSonarQubeEnv('sonar-scanner') { 
+        // If you have configured more than one global server connection, you can specify its name
+//      sh "${scannerHome}/bin/sonar-scanner"
+        sh "mvn -f maven1234/pom.xml sonar:sonar -Dsonar.organization=javaapp21 -Dsonar.projectKey=java180498 -Dsonar.host.url=https://sonarcloud.io -Dsonar.login=7f34e4164551970970cf2d1b6bef05008f69f5a9"
+    }
+        }
+        }
+        stage('artifact'){
+            steps{
+                archiveArtifacts artifacts: '**/*.war', followSymlinks: false
+            }
+        }
+        stage('copy artifact'){
+            steps{
+                copyArtifacts filter: '**/*.war', fingerprintArtifacts: true, projectName: 'pipescrap', selector: lastSuccessful()
+            }
+        }
+    }
+}
