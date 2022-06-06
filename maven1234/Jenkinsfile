@@ -30,8 +30,15 @@ pipeline{
             }
         }
         stage('copy artifact'){
+            agent { label 'windows' }
             steps{
                 copyArtifacts filter: '**/*.war', fingerprintArtifacts: true, projectName: '${JOB_NAME}', selector: specific('${BUILD_NUMBER}')
+            }
+        }
+        stage( 'deploy' ){
+            agent {  label 'windows' }
+            steps{
+                deploy adapters: [tomcat9(credentialsId: 'tomcat', path: '', url: 'http://localhost:8080')], contextPath: 'maven1234', war: '**/*.war'
             }
         }
     }
